@@ -55,9 +55,9 @@ def get_window_index(df, num_windows):
             series_data = row[VALUE_COL_NAME]
             total_length = len(series_data)
 
-    assert num_windows < total_length, "Number of windows cannot be greater than the length of the series"
     assert num_windows > 0, "Number of windows cannot be less than 1"
-
+    assert num_windows < total_length, "Number of windows cannot be greater than the length of the series"
+    
     window_length = total_length // num_windows
     window_start_index = 0
 
