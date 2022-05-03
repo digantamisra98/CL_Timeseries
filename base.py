@@ -70,7 +70,7 @@ def get_window_index(df, num_windows):
 
     return window_index_list
 
-def get_window(df, num_windows, window_number, freq):
+def get_window(df, num_windows, window_number, replay_window_num, freq):
     train_series_list = []
     test_series_list = []
     replay_list = []
@@ -81,6 +81,7 @@ def get_window(df, num_windows, window_number, freq):
     window_index_list = get_window_index(df, num_windows)
     window_start = window_index_list[window_number][0]
     window_end = window_index_list[window_number][1]
+    replay_window_index = window_index_list[window_number - replay_window_num][0]
 
     for index, row in df.iterrows():
         if VALUE_COL_NAME == 'price':
@@ -96,16 +97,13 @@ def get_window(df, num_windows, window_number, freq):
             forecast_horizon = np.round(0.2 * len(series_data))
 
             # Creating training and test series. Test series will be only used during evaluation
-            train_series_data = series_data[window_start: window_end - forecast_horizon]
+            if window_start != 0:
+                train_series_data = series_data[replay_window_index: window_end - forecast_horizon]
+            else:
+                train_series_data = series_data[window_start: window_end - forecast_horizon]
             test_series_data = series_data[
                 window_end - forecast_horizon : window_end
             ]
-
-            if window_number != 0:
-                replay_list.append(series_data[:window_start])
-
-            replay_series_full_list.append({FieldName.TARGET: replay_list, FieldName.START: pd.Timestamp(train_start_time, freq=freq)})
-
 
             train_series_list.append(train_series_data)
             test_series_list.append(test_series_data)
@@ -140,7 +138,8 @@ def get_window(df, num_windows, window_number, freq):
 
 def get_deep_nn_forecasts(
     dataset_name,
-    window_size,
+    num_windows,
+    replay_window_num,
     lag,
     input_file_name,
     method,
@@ -180,7 +179,7 @@ def get_deep_nn_forecasts(
 
     start_exec_time = datetime.now()
 
-    train_ds, test_ds, replay, forecast_horizon = get_window(df, window_size, window_number, freq)
+    train_ds, test_ds, replay, forecast_horizon = get_window(df, num_windows, window_number, replay_window_num, freq)
 
     if method == "nbeats":
         estimator = NBEATSEstimator(
