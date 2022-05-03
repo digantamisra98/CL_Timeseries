@@ -113,7 +113,7 @@ def get_deep_nn_forecasts(dataset_name, lag, input_file_name, method, external_f
     train_ds = ListDataset(train_series_full_list, freq=freq)
     test_ds = ListDataset(test_series_full_list, freq=freq)
 
-    elif method =="nbeats":
+    elif method == "nbeats":
         estimator = NBEATSEstimator(freq=freq,
                                     context_length=lag,
                                     prediction_length=forecast_horizon)
