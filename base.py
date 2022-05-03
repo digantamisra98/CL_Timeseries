@@ -48,6 +48,88 @@ FREQUENCY_MAP = {
     "yearly": "1Y",
 }
 
+def get_window_index(df, num_windows):
+
+    for index, row in df.iterrows():
+        if VALUE_COL_NAME == 'price':
+            series_data = row[VALUE_COL_NAME]
+            total_length = len(series_data)
+
+    assert num_windows < total_length, "Number of windows cannot be greater than the length of the series"
+    assert num_windows > 0, "Number of windows cannot be less than 1"
+
+    window_length = total_length // num_windows
+    window_start_index = 0
+
+    window_index_list = []
+
+    for i in range(num_windows):
+        window_end_index = window_start_index + window_length
+        window_index_list.append((window_start_index, window_end_index))
+        window_start_index = window_end_index
+
+    return window_index_list
+
+def get_window(df, num_windows, window_number, freq):
+    train_series_list = []
+    test_series_list = []
+    replay_list = []
+    train_series_full_list = []
+    test_series_full_list = []
+    replay_series_full_list = []
+
+    window_index_list = get_window_index(df, num_windows)
+    window_start = window_index_list[window_number][0]
+    window_end = window_index_list[window_number][1]
+
+    for index, row in df.iterrows():
+        if VALUE_COL_NAME == 'price':
+            if TIME_COL_NAME in df.columns:
+                train_start_time = row[TIME_COL_NAME]
+            else:
+                train_start_time = datetime.strptime(
+                    "1900-01-01 00-00-00", "%Y-%m-%d %H-%M-%S"
+                )  # Adding a dummy timestamp, if the timestamps are not available in the dataset or consider_time is False
+
+            series_data = row[VALUE_COL_NAME]
+
+            forecast_horizon = np.round(0.2 * len(series_data))
+
+            # Creating training and test series. Test series will be only used during evaluation
+            train_series_data = series_data[window_start: window_end - forecast_horizon]
+            test_series_data = series_data[
+                window_end - forecast_horizon : window_end
+            ]
+
+            if window_number != 0:
+                replay_list.append(series_data[:window_start])
+
+            replay_series_full_list.append({FieldName.TARGET: replay_list, FieldName.START: pd.Timestamp(train_start_time, freq=freq)})
+
+
+            train_series_list.append(train_series_data)
+            test_series_list.append(test_series_data)
+
+            # We use full length training series to train the model as we do not tune hyperparameters
+            train_series_full_list.append(
+                {
+                    FieldName.TARGET: train_series_data,
+                    FieldName.START: pd.Timestamp(train_start_time, freq=freq),
+                }
+            )
+
+            test_series_full_list.append(
+                {
+                    FieldName.TARGET: series_data,
+                    FieldName.START: pd.Timestamp(train_start_time, freq=freq),
+                }
+            )
+
+        train_ds = ListDataset(train_series_full_list, freq=freq)
+        test_ds = ListDataset(test_series_full_list, freq=freq)
+
+    return train_ds, test_ds, replay_series_full_list, forecast_horizon
+
 # Parameters
 # dataset_name - the name of the dataset
 # lag - the number of past lags that should be used when predicting the next future value of time series
@@ -55,8 +137,10 @@ FREQUENCY_MAP = {
 # method - name of the forecasting method that you want to evaluate
 # external_forecast_horizon - the required forecast horizon, if it is not available in the .tsf file
 # integer_conversion - whether the forecasts should be rounded or not
+
 def get_deep_nn_forecasts(
     dataset_name,
+    window_size,
     lag,
     input_file_name,
     method,
@@ -68,17 +152,13 @@ def get_deep_nn_forecasts(
     (
         df,
         frequency,
-        forecast_horizon,
+        _,
         contain_missing_values,
         contain_equal_length,
     ) = loader.convert_tsf_to_dataframe(
         BASE_DIR + "/tsf_data/" + input_file_name, "NaN", VALUE_COL_NAME
     )
 
-    train_series_list = []
-    test_series_list = []
-    train_series_full_list = []
-    test_series_full_list = []
     final_forecasts = []
 
     if frequency is not None:
@@ -100,42 +180,7 @@ def get_deep_nn_forecasts(
 
     start_exec_time = datetime.now()
 
-    for index, row in df.iterrows():
-        if TIME_COL_NAME in df.columns:
-            train_start_time = row[TIME_COL_NAME]
-        else:
-            train_start_time = datetime.strptime(
-                "1900-01-01 00-00-00", "%Y-%m-%d %H-%M-%S"
-            )  # Adding a dummy timestamp, if the timestamps are not available in the dataset or consider_time is False
-
-        series_data = row[VALUE_COL_NAME]
-
-        # Creating training and test series. Test series will be only used during evaluation
-        train_series_data = series_data[: len(series_data) - forecast_horizon]
-        test_series_data = series_data[
-            (len(series_data) - forecast_horizon) : len(series_data)
-        ]
-
-        train_series_list.append(train_series_data)
-        test_series_list.append(test_series_data)
-
-        # We use full length training series to train the model as we do not tune hyperparameters
-        train_series_full_list.append(
-            {
-                FieldName.TARGET: train_series_data,
-                FieldName.START: pd.Timestamp(train_start_time, freq=freq),
-            }
-        )
-
-        test_series_full_list.append(
-            {
-                FieldName.TARGET: series_data,
-                FieldName.START: pd.Timestamp(train_start_time, freq=freq),
-            }
-        )
-
-    train_ds = ListDataset(train_series_full_list, freq=freq)
-    test_ds = ListDataset(test_series_full_list, freq=freq)
+    train_ds, test_ds, replay, forecast_horizon = get_window(df, window_size, window_number, freq)
 
     if method == "nbeats":
         estimator = NBEATSEstimator(
