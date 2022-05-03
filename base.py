@@ -1,15 +1,16 @@
-from gluonts.model.n_beats import NBEATSEstimator
-from gluonts.model.transformer import TransformerEstimator
-
-from gluonts.dataset.common import ListDataset
-from gluonts.dataset.field_names import FieldName
-from gluonts.evaluation.backtest import make_evaluation_predictions
-from datetime import datetime
 import csv
 import os
 import subprocess
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
+from gluonts.dataset.common import ListDataset
+from gluonts.dataset.field_names import FieldName
+from gluonts.evaluation.backtest import make_evaluation_predictions
+from gluonts.model.n_beats import NBEATSEstimator
+from gluonts.model.transformer import TransformerEstimator
+
 import utils.data_loader as loader
 
 BASE_DIR = "TSForecasting"
@@ -113,7 +114,7 @@ def get_deep_nn_forecasts(dataset_name, lag, input_file_name, method, external_f
     train_ds = ListDataset(train_series_full_list, freq=freq)
     test_ds = ListDataset(test_series_full_list, freq=freq)
 
-    elif method == "nbeats":
+    if method == "nbeats":
         estimator = NBEATSEstimator(freq=freq,
                                     context_length=lag,
                                     prediction_length=forecast_horizon)
