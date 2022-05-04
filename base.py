@@ -73,10 +73,8 @@ def get_window_index(df, num_windows):
 def get_window(df, num_windows, window_number, replay_window_num, freq):
     train_series_list = []
     test_series_list = []
-    replay_list = []
     train_series_full_list = []
     test_series_full_list = []
-    replay_series_full_list = []
 
     window_index_list = get_window_index(df, num_windows)
     window_start = window_index_list[window_number][0]
