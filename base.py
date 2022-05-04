@@ -124,7 +124,7 @@ def get_window(df, num_windows, window_number, replay_window_num, freq):
         train_ds = ListDataset(train_series_full_list, freq=freq)
         test_ds = ListDataset(test_series_full_list, freq=freq)
 
-    return train_ds, test_ds, replay_series_full_list, forecast_horizon
+    return train_ds, test_ds, forecast_horizon
 
 # Parameters
 # dataset_name - the name of the dataset
