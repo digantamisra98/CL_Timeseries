@@ -65,7 +65,7 @@ for epoch in range(args.n_epochs):
     for i in range(0, len(X), args.batch_size):
         batch_x = X[i:i+args.batch_size]
         #batch_x = torch.var(batch_x)
-        recon_x, mu, logvar = model(batch_x)
+        recon_x, mu, logvar = model(torch.tensor(batch_x))
         loss = loss_function(recon_x, batch_x, mu, logvar)
         optimizer.zero_grad()
         loss.backward()
