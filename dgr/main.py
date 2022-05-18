@@ -16,25 +16,13 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument(
     '--experiment', type=str,
-    choices=['permutated-mnist', 'svhn-mnist', 'mnist-svhn'],
-    default='permutated-mnist'
+    choices=['bitcoin']
 )
-parser.add_argument('--mnist-permutation-number', type=int, default=5)
-parser.add_argument('--mnist-permutation-seed', type=int, default=0)
 parser.add_argument(
     '--replay-mode', type=str, default='generative-replay',
     choices=['exact-replay', 'generative-replay', 'none'],
 )
 
-parser.add_argument('--generator-lambda', type=float, default=10.)
-parser.add_argument('--generator-z-size', type=int, default=100)
-parser.add_argument('--generator-c-channel-size', type=int, default=64)
-parser.add_argument('--generator-g-channel-size', type=int, default=64)
-parser.add_argument('--solver-depth', type=int, default=5)
-parser.add_argument('--solver-reducing-layers', type=int, default=3)
-parser.add_argument('--solver-channel-size', type=int, default=1024)
-
-parser.add_argument('--generator-c-updates-per-g-update', type=int, default=5)
 parser.add_argument('--generator-iterations', type=int, default=3000)
 parser.add_argument('--solver-iterations', type=int, default=1000)
 parser.add_argument('--importance-of-new-task', type=float, default=.3)
@@ -46,13 +34,9 @@ parser.add_argument('--batch-size', type=int, default=32)
 parser.add_argument('--test-size', type=int, default=1024)
 parser.add_argument('--sample-size', type=int, default=36)
 
-parser.add_argument('--sample-log', action='store_true')
-parser.add_argument('--sample-log-interval', type=int, default=300)
-parser.add_argument('--image-log-interval', type=int, default=100)
 parser.add_argument('--eval-log-interval', type=int, default=50)
 parser.add_argument('--loss-log-interval', type=int, default=30)
 parser.add_argument('--checkpoint-dir', type=str, default='./checkpoints')
-parser.add_argument('--sample-dir', type=str, default='./samples')
 parser.add_argument('--no-gpus', action='store_false', dest='cuda')
 
 main_command = parser.add_mutually_exclusive_group(required=True)
