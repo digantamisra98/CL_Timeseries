@@ -57,7 +57,6 @@ if __name__ == '__main__':
     
     # setup bitcoin data using the following example
     # if experiment == 'bitcoin':
-    #     if experiment == 'bitcoin':
     #     d = pd.read_csv("/content/CL_Timeseries/cryp.csv")
     #     X = np.array(d["rate"].tolist())
     #     y= np.array(d["label"].tolist())
