@@ -4,10 +4,9 @@ import os.path
 import numpy as np
 import torch
 import utils
-from data import get_dataset, DATASET_CONFIGS
 from train import train
 from dgr import Scholar
-from models import WGAN, CNN
+from models import *
 
 
 parser = argparse.ArgumentParser(
