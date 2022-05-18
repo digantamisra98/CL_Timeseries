@@ -1,6 +1,5 @@
 import os
 import os.path
-import torchvision
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -47,17 +46,6 @@ def load_checkpoint(model, model_dir):
 
     # load parameters and return the checkpoint's epoch and precision.
     model.load_state_dict(checkpoint['state'])
-
-
-def test_model(model, sample_size, path, verbose=True):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    torchvision.utils.save_image(
-        model.sample(sample_size).data,
-        path + '.jpg',
-        nrow=6,
-    )
-    if verbose:
-        print('=> generated sample images at "{}".'.format(path))
 
 
 def validate(model, dataset, test_size=1024,

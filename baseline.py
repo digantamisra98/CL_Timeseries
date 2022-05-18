@@ -76,32 +76,3 @@ for epoch in range(args.n_epochs):
 def generate_samples(model, n_samples):
     z = torch.var(torch.randn(n_samples, args.n_features))
     return model.decoder(z)
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-        

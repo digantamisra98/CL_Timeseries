@@ -21,6 +21,7 @@ class BatchTrainable(nn.Module, metaclass=abc.ABCMeta):
     """
     Abstract base class which defines a generative-replay-based training
     interface for a model.
+
     """
     @abc.abstractmethod
     def train_a_batch(self, x, y, x_=None, y_=None, importance_of_new_task=.5):
