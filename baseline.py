@@ -64,8 +64,9 @@ def loss_function(recon_x, x, mu, logvar):
 for epoch in range(args.n_epochs):
     for i in range(0, len(X), args.batch_size):
         batch_x = X[i:i+args.batch_size]
-        batch_x = torch.var(batch_x)
-        recon_x, mu, logvar = model(batch_x)
+        batch_x = torch.tensor(batch_x).type(torch.float32)
+        #batch_x = torch.var(batch_x)
+        recon_x, mu, logvar = model(torch.tensor(batch_x))
         loss = loss_function(recon_x, batch_x, mu, logvar)
         optimizer.zero_grad()
         loss.backward()
@@ -74,5 +75,39 @@ for epoch in range(args.n_epochs):
 
 
 def generate_samples(model, n_samples):
+<<<<<<< HEAD
     z = torch.var(torch.randn(n_samples, args.n_features))
     return model.decoder(z)
+=======
+    z = torch.randn(n_samples, args.n_features)
+    return model.decoder(z)
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+>>>>>>> 8f41c9022e911e28177ad73d00bbb0c578c33fa1
