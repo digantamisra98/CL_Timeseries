@@ -120,7 +120,4 @@ if __name__ == '__main__':
             collate_fn=utils.label_squeezing_collate_fn,
             cuda=cuda
         )
-    else:
-        path = os.path.join(args.sample_dir, '{}-sample'.format(scholar.name))
-        utils.load_checkpoint(scholar, args.checkpoint_dir)
-        utils.test_model(scholar.generator, args.sample_size, path)
+
