@@ -104,12 +104,8 @@ if __name__ == '__main__':
         train(
             scholar, train_datasets, test_datasets,
             replay_mode=args.replay_mode,
-            generator_lambda=args.generator_lambda,
             generator_iterations=(
                 args.generator_iterations if train_generator else 0
-            ),
-            generator_c_updates_per_g_update=(
-                args.generator_c_updates_per_g_update
             ),
             solver_iterations=args.solver_iterations,
             importance_of_new_task=args.importance_of_new_task,
@@ -120,10 +116,6 @@ if __name__ == '__main__':
             beta1=args.beta1, beta2=args.beta2,
             loss_log_interval=args.loss_log_interval,
             eval_log_interval=args.eval_log_interval,
-            image_log_interval=args.image_log_interval,
-            sample_log_interval=args.sample_log_interval,
-            sample_log=args.sample_log,
-            sample_dir=args.sample_dir,
             checkpoint_dir=args.checkpoint_dir,
             collate_fn=utils.label_squeezing_collate_fn,
             cuda=cuda
