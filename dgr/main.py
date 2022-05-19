@@ -75,7 +75,6 @@ if __name__ == "__main__":
     generator = Generator(
         input_dim=1,
         hidden_dim=64,
-        output_dim=1,
         latent_dim=32,
     )
 

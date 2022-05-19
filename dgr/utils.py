@@ -83,9 +83,9 @@ def xavier_initialize(model):
 
     for p in parameters:
         if p.dim() >= 2:
-            nn.init.xavier_normal(p)
+            nn.init.xavier_normal_(p)
         else:
-            nn.init.constant(p, 0)
+            nn.init.constant_(p, 0)
 
 
 def gaussian_intiailize(model, std=0.01):
@@ -94,9 +94,9 @@ def gaussian_intiailize(model, std=0.01):
 
     for p in parameters:
         if p.dim() >= 2:
-            nn.init.normal(p, std=std)
+            nn.init.normal_(p, std=std)
         else:
-            nn.init.constant(p, 0)
+            nn.init.constant_(p, 0)
 
 
 class LambdaModule(nn.Module):
