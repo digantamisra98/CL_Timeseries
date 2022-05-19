@@ -22,8 +22,19 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
         )  # --> each exemplar_set is an <np.array> of N images with shape (N, Ch, H, W)
         self.exemplar_means = []
         self.compute_means = True
+        hidden_sizes = [12,12] # Change Accordingly
+        self.net = nn.Sequential()
+        sequence_length = 58 # Change Accordingly
+        self.net.add_module("input", nn.Linear(sequence_length, hidden_sizes[0]))
 
-        # settings
+        for i in range(1, len(hidden_sizes)):
+            #  Each layer will divide the size of feature map by 2
+            self.net.add_module(
+                "linear%d" % i,
+                nn.Linear(hidden_sizes[i - 1], hidden_sizes[i]),
+            )
+            self.net.add_module("relu%d" % i, nn.ReLU(True))
+          # settings
         self.memory_budget = 2000
         self.norm_exemplars = True
         self.herding = True
@@ -34,9 +45,10 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
     def _is_on_cuda(self):
         return next(self.parameters()).is_cuda
 
-    @abc.abstractmethod
-    def feature_extractor(self, images):
-        pass
+    def feature_extractor(self, batch_x):
+
+      return self.net(batch_x)
+        
 
     ####----MANAGING EXEMPLAR SETS----####
 
@@ -62,7 +74,9 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
             # dataloader = define your dataloader
 
             # image_batch is just the batch of timeseries
-            for (image_batch, _) in dataloader:
+            for i in range(0, len(dataset), 32): # Change Accordingly
+                image_batch = torch.tensor(dataset[i:i+32]).type(torch.float32) # Change Accordingly
+                # print(image_batch.shape)
                 image_batch = image_batch.to(self._device())
                 with torch.no_grad():
                     feature_batch = self.feature_extractor(image_batch).cpu()
@@ -94,7 +108,7 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
                     raise ValueError("Exemplars should not be repeated!!!!")
                 list_of_selected.append(index_selected)
 
-                exemplar_set.append(dataset[index_selected][0].numpy())
+                exemplar_set.append(dataset[index_selected])
                 exemplar_features[k] = copy.deepcopy(features[index_selected])
 
                 # make sure this example won't be selected again
@@ -104,79 +118,11 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
                 n_max, size=min(n, n_max), replace=False
             )
             for k in indeces_selected:
-                exemplar_set.append(dataset[k][0].numpy())
+                exemplar_set.append(dataset[k])
 
         # add this [exemplar_set] as a [n]x[ich]x[isz]x[isz] to the list of [exemplar_sets]
         self.exemplar_sets.append(np.array(exemplar_set))
 
         # set mode of model back
+        print(np.array(self.exemplar_sets).shape)
         self.train(mode=mode)
-
-    ####----CLASSIFICATION----####
-
-    def classify_with_exemplars(self, x, allowed_classes=None):
-        """Classify images by nearest-means-of-exemplars (after transform to feature representation)
-        INPUT:      x = <tensor> of size (bsz,ich,isz,isz) with input image batch
-                    allowed_classes = None or <list> containing all "active classes" between which should be chosen
-        OUTPUT:     preds = <tensor> of size (bsz,)"""
-
-        # Set model to eval()-mode
-        mode = self.training
-        self.eval()
-
-        batch_size = x.size(0)
-
-        # Do the exemplar-means need to be recomputed?
-        if self.compute_means:
-            exemplar_means = (
-                []
-            )  # --> list of 1D-tensors (of size [feature_size]), list is of length [n_classes]
-            for P_y in self.exemplar_sets:
-                exemplars = []
-                # Collect all exemplars in P_y into a <tensor> and extract their features
-                for ex in P_y:
-                    exemplars.append(torch.from_numpy(ex))
-                exemplars = torch.stack(exemplars).to(self._device())
-                with torch.no_grad():
-                    features = self.feature_extractor(exemplars)
-                if self.norm_exemplars:
-                    features = F.normalize(features, p=2, dim=1)
-                # Calculate their mean and add to list
-                mu_y = features.mean(dim=0, keepdim=True)
-                if self.norm_exemplars:
-                    mu_y = F.normalize(mu_y, p=2, dim=1)
-                exemplar_means.append(
-                    mu_y.squeeze()
-                )  # -> squeeze removes all dimensions of size 1
-            # Update model's attributes
-            self.exemplar_means = exemplar_means
-            self.compute_means = False
-
-        # Reorganize the [exemplar_means]-<tensor>
-        exemplar_means = (
-            self.exemplar_means
-            if allowed_classes is None
-            else [self.exemplar_means[i] for i in allowed_classes]
-        )
-        means = torch.stack(exemplar_means)  # (n_classes, feature_size)
-        means = torch.stack(
-            [means] * batch_size
-        )  # (batch_size, n_classes, feature_size)
-        means = means.transpose(1, 2)  # (batch_size, feature_size, n_classes)
-
-        # Extract features for input data (and reorganize)
-        with torch.no_grad():
-            feature = self.feature_extractor(x)  # (batch_size, feature_size)
-        if self.norm_exemplars:
-            feature = F.normalize(feature, p=2, dim=1)
-        feature = feature.unsqueeze(2)  # (batch_size, feature_size, 1)
-        feature = feature.expand_as(means)  # (batch_size, feature_size, n_classes)
-
-        # For each data-point in [x], find which exemplar-mean is closest to its extracted features
-        dists = (feature - means).pow(2).sum(dim=1).squeeze()  # (batch_size, n_classes)
-        _, preds = dists.min(1)
-
-        # Set mode of model back
-        self.train(mode=mode)
-
-        return preds
