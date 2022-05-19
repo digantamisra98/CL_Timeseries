@@ -51,9 +51,9 @@ class Solver(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
+        # h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
+        # c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
 
-        out, _ = self.lstm(x, (h0, c0))
+        out, _ = self.lstm(x)
         out = self.fc(out[:, -1, :])
         return out
