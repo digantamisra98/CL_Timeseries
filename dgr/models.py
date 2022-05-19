@@ -7,37 +7,35 @@ import utils
 
 # class Generator   (define your generative model here):
 class Generator(nn.Module):
-    def __init__(self, sequence_length, hidden_sizes):
-        """
-        :param channels: a list containing all channels including the input image channel (1 for gray, 3 for RGB)
-        """
+    def __init__(self, input_dim, hidden_dim, latent_dim):
         super(Generator, self).__init__()
-        assert isinstance(hidden_sizes, list)
-        self.encoder = nn.Sequential()
-        self.encoder.add_module("input", nn.Linear(sequence_length, hidden_sizes[0]))
-        for i in range(1, len(hidden_sizes)):
-            #  Each layer will divide the size of feature map by 2
-            self.encoder.add_module(
-                "linear%d" % i,
-                nn.Linear(hidden_sizes[i - 1], hidden_sizes[i]),
-            )
-            self.encoder.add_module("relu%d" % i, nn.ReLU(True))
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.latent_dim = latent_dim
 
-        self.decoder = nn.Sequential()
-        hidden_sizes = list(reversed(hidden_sizes))
-        for i in range(len(hidden_sizes) - 1):
-            # Each layer will double the size of feature map
-            self.decoder.add_module(
-                "inv-linear%d" % (i + 1),
-                nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]),
-            )
-            self.decoder.add_module("relud%d" % i, nn.ReLU(True))
-        self.decoder.add_module("output", nn.Linear(hidden_sizes[-1], sequence_length))
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc21 = nn.Linear(hidden_dim, latent_dim)
+        self.fc22 = nn.Linear(hidden_dim, latent_dim)
+        self.fc3 = nn.Linear(latent_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, input_dim)
+
+    def encode(self, x):
+        h1 = torch.tanh(self.fc1(x))
+        return self.fc21(h1), self.fc22(h1)
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
+    def decode(self, z):
+        h3 = torch.tanh(self.fc3(z))
+        return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        h = self.encoder(x)
-        y = self.decoder(h)
-        return y
+        mu, logvar = self.encode(x.view(-1, self.input_dim))
+        z = self.reparameterize(mu, logvar)
+        return self.decode(z), mu, logvar
 
 
 # class Solver (define your continual learner here):

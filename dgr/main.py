@@ -6,7 +6,7 @@ import torch
 import utils
 from train import train
 from dgr import Scholar
-from models import *
+from models import Solver, Generator
 
 
 parser = argparse.ArgumentParser("PyTorch implementation of Deep Generative Replay")
@@ -66,7 +66,18 @@ if __name__ == "__main__":
 
     # # define the models.
     # solver = ## define the model from models.py
+    solver = Solver(
+        input_dim=1,
+        hidden_dim=64,
+        output_dim=1,
+    )
     # generator = ## define the model from models.py
+    generator = Generator(
+        input_dim=1,
+        hidden_dim=64,
+        output_dim=1,
+        latent_dim=32,
+    )
 
     label = "{experiment}-{replay_mode}-r{importance_of_new_task}".format(
         experiment=experiment,
