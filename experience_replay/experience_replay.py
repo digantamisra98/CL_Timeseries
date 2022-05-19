@@ -125,4 +125,5 @@ class ExemplarHandler(nn.Module, metaclass=abc.ABCMeta):
 
         # set mode of model back
         print(np.array(self.exemplar_sets).shape)
-        self.train(mode=mode)
+        #self.train(mode=mode)
+        return self.exemplar_sets
