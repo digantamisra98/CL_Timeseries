@@ -9,6 +9,7 @@ from nbeats_pytorch.model import NBeatsNet
 # arbitrary data in the form of a dataframe
 data = pd.DataFrame(...)
 
+
 def window_data(data, window_size):
     # define a list to store the dataframes
     windows = []
@@ -16,13 +17,22 @@ def window_data(data, window_size):
     # loop over the dataframe
     for i in range(len(data) - window_size):
         # append the dataframe to the list
-        windows.append(data[i:i + window_size])
+        windows.append(data[i : i + window_size])
         indices.append(i)
-        
+
     # return the list of dataframes and the indices
     return windows, indices
 
-def main(data, window_size = 10, replay_size = 2, window_selector = 5, random = True, contiguous = False, full = False):
+
+def main(
+    data,
+    window_size=10,
+    replay_size=2,
+    window_selector=5,
+    random=True,
+    contiguous=False,
+    full=False,
+):
 
     # get the dataframes and the indices
     windows, indices = window_data(data, window_size)
@@ -39,7 +49,7 @@ def main(data, window_size = 10, replay_size = 2, window_selector = 5, random = 
     # select replay windows from the entire dataset
     elif full:
         replay_windows = windows[:window_selector]
-    
+
     # split train/test.
     c = int(len() * 0.8)
     x_train, y_train = x[:c], y[:c]
@@ -68,11 +78,17 @@ def main(data, window_size = 10, replay_size = 2, window_selector = 5, random = 
         # train.
         net.train()
         train_loss = []
-        for x_train_batch, y_train_batch in data_generator(x_train, y_train, batch_size):
+        for x_train_batch, y_train_batch in data_generator(
+            x_train, y_train, batch_size
+        ):
             grad_step += 1
             optimiser.zero_grad()
-            _, forecast = net(torch.tensor(x_train_batch, dtype=torch.float).to(net.device))
-            loss = F.mse_loss(forecast, torch.tensor(y_train_batch, dtype=torch.float).to(net.device))
+            _, forecast = net(
+                torch.tensor(x_train_batch, dtype=torch.float).to(net.device)
+            )
+            loss = F.mse_loss(
+                forecast, torch.tensor(y_train_batch, dtype=torch.float).to(net.device)
+            )
             train_loss.append(loss.item())
             loss.backward()
             optimiser.step()
@@ -84,6 +100,5 @@ def main(data, window_size = 10, replay_size = 2, window_selector = 5, random = 
         test_loss = F.mse_loss(forecast, torch.tensor(y_test, dtype=torch.float)).item()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
