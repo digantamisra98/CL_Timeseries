@@ -14,9 +14,11 @@ def label_squeezing_collate_fn(batch):
 
 def get_data_loader(dataset, batch_size, cuda=False, collate_fn=None):
     return DataLoader(
-        dataset, batch_size=batch_size, shuffle=True,
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
         collate_fn=(collate_fn or default_collate),
-        **({'num_workers': 0, 'pin_memory': True} if cuda else {})
+        **({"num_workers": 0, "pin_memory": True} if cuda else {})
     )
 
 
@@ -27,12 +29,10 @@ def save_checkpoint(model, model_dir):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    torch.save({'state': model.state_dict()}, path)
+    torch.save({"state": model.state_dict()}, path)
 
     # notify that we successfully saved the checkpoint.
-    print('=> saved the model {name} to {path}'.format(
-        name=model.name, path=path
-    ))
+    print("=> saved the model {name} to {path}".format(name=model.name, path=path))
 
 
 def load_checkpoint(model, model_dir):
@@ -40,18 +40,19 @@ def load_checkpoint(model, model_dir):
 
     # load the checkpoint.
     checkpoint = torch.load(path)
-    print('=> loaded checkpoint of {name} from {path}'.format(
-        name=model.name, path=path
-    ))
+    print(
+        "=> loaded checkpoint of {name} from {path}".format(name=model.name, path=path)
+    )
 
     # load parameters and return the checkpoint's epoch and precision.
-    model.load_state_dict(checkpoint['state'])
+    model.load_state_dict(checkpoint["state"])
 
 
-def validate(model, dataset, test_size=1024,
-             cuda=False, verbose=True, collate_fn=None):
+def validate(model, dataset, test_size=1024, cuda=False, verbose=True, collate_fn=None):
     data_loader = get_data_loader(
-        dataset, 128, cuda=cuda,
+        dataset,
+        128,
+        cuda=cuda,
         collate_fn=(collate_fn or default_collate),
     )
     total_tested = 0
@@ -72,30 +73,30 @@ def validate(model, dataset, test_size=1024,
 
     precision = total_correct / total_tested
     if verbose:
-        print('=> precision: {:.3f}'.format(precision))
+        print("=> precision: {:.3f}".format(precision))
     return precision
 
 
 def xavier_initialize(model):
-    modules = [m for n, m in model.named_modules() if 'conv' in n or 'fc' in n]
+    modules = [m for n, m in model.named_modules() if "conv" in n or "fc" in n]
     parameters = [p for m in modules for p in m.parameters()]
 
     for p in parameters:
         if p.dim() >= 2:
-            nn.init.xavier_normal(p)
+            nn.init.xavier_normal_(p)
         else:
-            nn.init.constant(p, 0)
+            nn.init.constant_(p, 0)
 
 
-def gaussian_intiailize(model, std=.01):
-    modules = [m for n, m in model.named_modules() if 'conv' in n or 'fc' in n]
+def gaussian_intiailize(model, std=0.01):
+    modules = [m for n, m in model.named_modules() if "conv" in n or "fc" in n]
     parameters = [p for m in modules for p in m.parameters()]
 
     for p in parameters:
         if p.dim() >= 2:
-            nn.init.normal(p, std=std)
+            nn.init.normal_(p, std=std)
         else:
-            nn.init.constant(p, 0)
+            nn.init.constant_(p, 0)
 
 
 class LambdaModule(nn.Module):
